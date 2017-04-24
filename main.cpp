@@ -24,7 +24,7 @@ extern "C" {
 
 int main(){
 	
-	int count, conteggio = 0, STATO = 1, num_cicli = 0;
+	int count, conteggio = 0, STATO = 0, num_cicli = 0;
 	char CHK, FIX = 0xA9, buff[128];
 	unsigned int nextTime ;
 	int fd;
@@ -45,7 +45,7 @@ int main(){
 
 	while(1){
 	  ///inivia un comando ogni 2 secondi
-
+		outF.open("dati.txt", ios::app);
 		if (millis () > nextTime){
 			//cout << "Out: " << "F" << endl;
 		  num_cicli++;
@@ -55,25 +55,44 @@ int main(){
 		  case 0:
 		 	  CMD.sendCmd('F');
 		 	  STATO = 1;
-			  cout << "Out: " << "F " << num_cicli <<endl;
+			  cout << "Out: " << "F" << num_cicli <<endl;
+			  outF << "Out: " << "F" << num_cicli <<endl;
 		  break;
 
 		  case 1:
-		 	  CMD.sendCmd('B');
-		 	  STATO = 0;
-			  cout << "Out: " << "B" << num_cicli <<endl;
+		 	  CMD.sendCmd('D', 5);
+		 	  STATO = 2;
+			  cout << "Out: " << "D5 " << num_cicli <<endl;
+			  outF << "Out: " << "D5 " << num_cicli <<endl;
+
 		  break;
 
 		  case 2:
 		 	  CMD.sendCmd('I');
 		 	  STATO = 3;
-			  cout << "Out: " << "I" << endl;
+			  cout << "Out: " << "I" << num_cicli << endl;
+			  outF << "Out: " << "I" << num_cicli <<endl;
 		  break;
 
 		  case 3:
-		 	  CMD.sendCmd('S');
+		 	  CMD.sendCmd('D', 2);
+		 	  STATO = 4;
+			  cout << "Out: " << "D2 " << num_cicli << endl;
+			  outF << "Out: " << "D2 " << num_cicli <<endl;
+		  break;
+
+		  case 4:
+		 	  CMD.sendCmd('D', 1);
+		 	  STATO = 5;
+			  cout << "Out: " << "D1 " << num_cicli << endl;
+			  outF << "Out: " << "D1 " << num_cicli <<endl;
+		  break;
+
+		  case 5:
+		 	  CMD.sendCmd('L');
 		 	  STATO = 0;
-			  cout << "Out: " << "S " << endl;
+			  cout << "Out: " << "L" << num_cicli << endl;
+			  outF << "Out: " << "L" << num_cicli <<endl;
 		  break;
 
 		  }
@@ -90,17 +109,45 @@ int main(){
 //		  serialPutchar (fd, count) ;
 //		  serialPutchar (fd, '\n');
 //		  serialPutchar (fd, '\r');
-		  nextTime += 100 ;
+		  nextTime += 10000 ;
 		}
 
 //		delay (3) ;
 //		if (conteggio > 16){
-		  while (count = sc.readBuff(buff)){
-			printf("ricevuto \n");
-//			//printf (" -> %3d", serialGetchar (fd)) ;
-			cout << "letti :" << count << "bytes" << endl;
-			for (int i = 0 ; i < count; i++)
-				cout << "valore " << (int) buff[i] << endl;
+//		  while (count = sc.readBuff(buff)){
+//			cout << "ricevuto " << endl;
+//			outF << "ricevuto " << endl;
+////			//printf (" -> %3d", serialGetchar (fd)) ;
+//			cout << "letti :" << count << "bytes" << endl;
+//			outF << "letti :" << count << "bytes" << endl;
+//			for (int i = 0 ; i < count; i++){
+//				cout << "valore " << (int) buff[i] << endl;
+//				outF << "valore " << (int) buff[i] << endl;
+//			}
+//		}
+		if (CMD.receiveCmd()){
+			/// il comando ricevuto e' valido e stampo i bytes
+
+			cout << "ricezione ok" << endl;
+//			outF << "letti :" << count << "bytes" << endl;
+
+
+			if (CMD.rxBuff[0] < 6){
+				/// ricevuto un sensore di distanza
+				cout << "dist "<< (int) CMD.rxBuff[0] << ": " << (int) CMD.rxBuff[1] << endl;
+				cout <<endl;
+				outF << "dist "<< (int) CMD.rxBuff[0] << ": " << (int) CMD.rxBuff[1] << endl;
+				outF <<endl;
+			}
+			else{
+				for (int i = 0; i < 4;i++){
+					cout << "valore " << (int) CMD.rxBuff[i] << endl;
+					outF << "valore " << (int) CMD.rxBuff[i] << endl;
+				}
+				cout << endl;
+				outF << endl;
+			}
+
 		}
 //			printf("%c", serialGetchar(fd));
 //			fflush (stdout) ;
@@ -111,7 +158,7 @@ int main(){
 //		  printf("\n");
 //		}
 //
-//	  outF.close();
+	  outF.close();
 		}
 
 	//funzione();

@@ -36,6 +36,9 @@ public:
 	void connect(SerialComm *p);
 	void sendCmd(char);
 	void sendCmd(char, int);
+
+	int receiveCmd();
+
 	/// buffer di trasmissione del comando
 	char txBuff[16];
 	/// buffer di ricezione del comando

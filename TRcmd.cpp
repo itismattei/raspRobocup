@@ -62,7 +62,7 @@ void TRcmd::sendCmd(char c){
 
 	case 'S':
 		txBuff[0] = 'S';
-		txBuff[2] = 'S' ^ CHS ^ '3';
+		txBuff[2] = 'S' ^ CHS ^ '0';
 		txBuff[3] = '*';
 	break;
 
@@ -141,4 +141,61 @@ void TRcmd::connect(SerialComm * p){
 		else
 			isOK = false;
 	}
+}
+
+///
+/// ricezione dati dalla seriale
+int TRcmd::receiveCmd(void){
+	int num, STATO = 0, i0 = 0, reply = 0;
+	char locBuff[64];
+
+	while (num = scPtr->readBuff(rxBuff)){
+		if (STATO == 1){
+			for (int i = i0; i <= 4; i++)
+				locBuff[i] = rxBuff[ i - i0];
+			STATO = 2;
+		}
+
+		/// ho ricevuto meno di 4 bytes e devo aspettare un po'
+		if (num < 4 && STATO == 0){
+			int i;
+			/// prima volta che attendo
+			for(i = 0; i <= num; i++)
+				locBuff[i] = rxBuff[i];
+			STATO = 1;
+			i0 = i;
+			/// breve attesa
+			for (volatile int i = 1000000; i > 0; i--);
+		}
+		else
+			if (STATO == 0 && num == 4){
+				/// copia in locBuff i contenuto di rxBuff
+				for (int i = 0; i < 4; i++)
+					locBuff[i] = rxBuff[i];
+				//cout << "copiati 4 ytes" << endl;
+				STATO = 3;
+			}
+
+	//	cout << "bytes letti " << num << " stato " << STATO << endl;
+	}
+
+
+
+	if (STATO > 0){
+		/// dovrebbe aver copiato i 4 bytes e controlla il checksum
+		unsigned int checksum = locBuff[0] ^ locBuff[1] ^ CHS;
+		if ( checksum == locBuff[2] && locBuff[3] == '*'){
+			/// la ricezione e' corretta
+			isOK = true;
+			//cout << "ricezione ok" << endl;
+		}
+		else
+			isOK = false;
+
+	}
+	else
+		isOK = false;
+
+	return (int)isOK;
+
 }

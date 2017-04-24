@@ -77,7 +77,7 @@ int SerialComm::readBuff(char *buff){
 		//printf("ricevuto \n");
 		//printf (" -> %3d", serialGetchar (fd)) ;
 		mBuff[ind] = serialGetchar(mfd);
-		printf("%c", mBuff[ind]);
+		//printf("%c", mBuff[ind]);
 		fflush (stdout) ;
 		ind++;
 		/// modulo 128
