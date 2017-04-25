@@ -151,13 +151,13 @@ int TRcmd::receiveCmd(void){
 
 	while (num = scPtr->readBuff(rxBuff)){
 		if (STATO == 1){
-			for (int i = i0; i <= 4; i++)
+			for (int i = i0; i <= 5; i++)
 				locBuff[i] = rxBuff[ i - i0];
 			STATO = 2;
 		}
 
-		/// ho ricevuto meno di 4 bytes e devo aspettare un po'
-		if (num < 4 && STATO == 0){
+		/// ho ricevuto meno di 5bytes e devo aspettare un po'
+		if (num < 5 && STATO == 0){
 			int i;
 			/// prima volta che attendo
 			for(i = 0; i <= num; i++)
@@ -168,11 +168,14 @@ int TRcmd::receiveCmd(void){
 			for (volatile int i = 1000000; i > 0; i--);
 		}
 		else
-			if (STATO == 0 && num == 4){
+			if (STATO == 0 && num == 5){
 				/// copia in locBuff i contenuto di rxBuff
-				for (int i = 0; i < 4; i++)
+				for (int i = 0; i < 5; i++){
 					locBuff[i] = rxBuff[i];
-				//cout << "copiati 4 ytes" << endl;
+/// per scopi di debug
+///					cout << (int) locBuff[i] << endl;
+				}
+//				cout << "copiati 5 bytes" << endl;
 				STATO = 3;
 			}
 
@@ -183,8 +186,8 @@ int TRcmd::receiveCmd(void){
 
 	if (STATO > 0){
 		/// dovrebbe aver copiato i 4 bytes e controlla il checksum
-		unsigned int checksum = locBuff[0] ^ locBuff[1] ^ CHS;
-		if ( checksum == locBuff[2] && locBuff[3] == '*'){
+		unsigned int checksum = locBuff[0] ^ locBuff[1] ^ locBuff[2] ^ CHS;
+		if ( checksum == locBuff[3] && locBuff[4] == '*'){
 			/// la ricezione e' corretta
 			isOK = true;
 			//cout << "ricezione ok" << endl;

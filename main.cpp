@@ -30,6 +30,7 @@ int main(){
 	int fd;
 	ofstream outF("dati.txt", ios::app);
 	cout << "Test Comunicazione!" << endl;
+	outF << "Registrazione comunicazioni" << endl;
 	SerialComm sc;
 	TRcmd CMD;
 	CMD.connect(&sc);
@@ -53,10 +54,10 @@ int main(){
 		  fflush (stdout) ;
 		  switch(STATO){
 		  case 0:
-		 	  CMD.sendCmd('F');
+		 	  CMD.sendCmd('D', 1);
 		 	  STATO = 1;
-			  cout << "Out: " << "F" << num_cicli <<endl;
-			  outF << "Out: " << "F" << num_cicli <<endl;
+			  cout << "Out: " << "D1 " << num_cicli <<endl;
+			  outF << "Out: " << "D1 " << num_cicli <<endl;
 		  break;
 
 		  case 1:
@@ -82,7 +83,7 @@ int main(){
 		  break;
 
 		  case 4:
-		 	  CMD.sendCmd('D', 1);
+		 	  CMD.sendCmd('D', 3);
 		 	  STATO = 5;
 			  cout << "Out: " << "D1 " << num_cicli << endl;
 			  outF << "Out: " << "D1 " << num_cicli <<endl;
@@ -109,7 +110,7 @@ int main(){
 //		  serialPutchar (fd, count) ;
 //		  serialPutchar (fd, '\n');
 //		  serialPutchar (fd, '\r');
-		  nextTime += 10000 ;
+		  nextTime += 5000 ;
 		}
 
 //		delay (3) ;
@@ -129,18 +130,25 @@ int main(){
 			/// il comando ricevuto e' valido e stampo i bytes
 
 			cout << "ricezione ok" << endl;
-//			outF << "letti :" << count << "bytes" << endl;
+			outF << "ricezione ok" << endl;
 
 
 			if (CMD.rxBuff[0] < 6){
 				/// ricevuto un sensore di distanza
-				cout << "dist "<< (int) CMD.rxBuff[0] << ": " << (int) CMD.rxBuff[1] << endl;
+/// scopi di debug
+///				cout <<  (int) CMD.rxBuff[1] << endl <<  (int) CMD.rxBuff[2] << endl;
+				int misura;
+				misura = (CMD.rxBuff[1] & 0xFF) << 8;
+				//misura <<= 8;
+				misura += (CMD.rxBuff[2] & 0xFF);
+				cout << "dist " << (int) CMD.rxBuff[0] << ": " << misura << endl;
 				cout <<endl;
-				outF << "dist "<< (int) CMD.rxBuff[0] << ": " << (int) CMD.rxBuff[1] << endl;
+				/// scrive su file
+				outF << "dist " << (int) CMD.rxBuff[0] << ": " << misura << endl;
 				outF <<endl;
 			}
 			else{
-				for (int i = 0; i < 4;i++){
+				for (int i = 0; i < 5;i++){
 					cout << "valore " << (int) CMD.rxBuff[i] << endl;
 					outF << "valore " << (int) CMD.rxBuff[i] << endl;
 				}

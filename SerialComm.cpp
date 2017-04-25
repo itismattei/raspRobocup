@@ -90,7 +90,11 @@ int SerialComm::readBuff(char *buff){
 		}
 		else{
 			mBuff[ind] = '\0';
-			strcpy(buff, mBuff);
+			/// inserita questa,perche' se una lettura del sensore ha un byte a 0,
+			/// la strcpy si arresta nella copia ed il dato inviato e' sbagliato
+			for (int i = 0; i < ind; i++)
+				buff[i] = mBuff[i];
+			//strcpy(buff, mBuff);
 		}
 	}
 	return ind;
