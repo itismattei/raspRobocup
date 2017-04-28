@@ -11,6 +11,9 @@ using namespace std;
 #include <string.h>
 #include <errno.h>
 
+#include "campoGara.h"
+#include <iterator>
+
 extern "C" {	
 	int funzione();
 	int millis();
@@ -40,7 +43,25 @@ int main(){
 //		/// la seriale non e' presente o non ha risposto
 //		exit(-1);
 //	}
-	
+	/// campo di gara
+	campoGara terreno;
+	//cellaBase cella;
+	//cella.e[0] = 0;
+	//cella.e[1] = 1;
+	//terreno.campo.push_back(cella);
+	//cella.e[0] = 1;
+	//cella.e[1] = 1;
+	//terreno.campo.push_back(cella);
+	/// stampala dimensione del vettore
+	cout << "dim " << terreno.campo.size()  << endl;
+	cout << "coord. sec elemento " << terreno.campo[1].e[0] << " : " << terreno.campo[1].e[1] << endl;
+	cout << "coord. primo elemento " << terreno.campo[0].e[0] << " : " << terreno.campo[0].e[1] << endl;
+
+	/// iteratore
+	//vector<int> pippo;
+	//pippo.push_back(4);
+	//vector<int>::iterator pp= find(pippo.begin(), pippo.end(), 4);
+	//vector<cellaBase>::iterator it = find(terreno.campo.begin(), terreno.campo.end(), cella);
 
 	nextTime = millis () + 500 ;
 
