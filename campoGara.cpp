@@ -14,10 +14,11 @@ campoGara::campoGara() {
 			campo.push_back(cellaBase(i, j));
 		}
 	} 
-	posizione[0] = 9000;  //X
-	posizione[1] = -9000; //Y
+	posizione[0] = 9150;  //X
+	posizione[1] = -9150; //Y
 	direzione[0] = 0;
 	direzione[1] = 1;
+	CMD.connect(&sc);
 }
 
 campoGara::~campoGara() {
@@ -26,6 +27,145 @@ campoGara::~campoGara() {
 }
 
 void campoGara::onTimer(){
+	//Fase di analisi
 
+	//Lettura sensori
+	//Lettura dei 5 sensori di distanza
+	int distanza[5];
+	int angolo, colore, temperatura, velocita = 0;
+	for (int i=0;i<5;i++){
+		CMD.sendCmd('D', i+1);
+
+		if (CMD.receiveCmd()){
+			if (CMD.rxBuff[0] < 6){
+				distanza[i] = (CMD.rxBuff[1] & 0xFF) << 8;
+				distanza[i] += (CMD.rxBuff[2] & 0xFF);
+			}
+		}
+	}
+	//Lettura giroscopio
+	CMD.sendCmd('D', 6);
+	if(CMD.receiveCmd()){
+		angolo = (CMD.rxBuff[1] & 0xFF) << 8;
+		angolo += (CMD.rxBuff[2] & 0xFF);
+	} else{
+		angolo = -1;
+	}
+	//Lettura colore mattonella
+	CMD.sendCmd('D', 7);
+	if(CMD.receiveCmd()){
+		colore = (CMD.rxBuff[1] & 0xFF) << 8;
+		colore += (CMD.rxBuff[2] & 0xFF);
+	} else{
+		colore = -1;
+	}
+	//Lettura temperatura
+	CMD.sendCmd('D', 8);
+	if(CMD.receiveCmd()){
+		temperatura = (CMD.rxBuff[1] & 0xFF) << 8;
+		temperatura += (CMD.rxBuff[2] & 0xFF);
+	} else{
+		temperatura = -1;
+	}
+	//Lettura velocità
+	CMD.sendCmd('D', 9);
+	if(CMD.receiveCmd()){
+		velocita = (CMD.rxBuff[1] & 0xFF) << 8;
+		velocita += (CMD.rxBuff[2] & 0xFF);
+	} else{
+		velocita = -1;
+	}
+
+
+	//Analizzo i dati dei sensori
+	int posMuro[2];
+	int cella = 0;
+	for (int i=0;i<9;i++){
+		switch (i){
+			//Sensore frontale
+			case 0:
+				if (distanza[i] < 25){
+					posMuro[0] = posizione[0] + (distanza[i] * direzione[0]);
+					posMuro[1] = posizione[1] + (distanza[i] * direzione[1]);
+					cella = (int)posMuro[0] / 300 + (int)posMuro[1] / 300*60;
+					int distX = posMuro[0] % 300;
+					int distY = posMuro[1] % 300;
+				}
+				break;
+			//Sensore SX
+			case 1:
+				if (distanza[i] < 25){
+					posMuro[0] = posizione[0] + (distanza[i] * -direzione[1]);	
+					posMuro[1] = posizione[1] + (distanza[i] * direzione[0]);
+					cella = (int)posMuro[0] / 300 + (int)posMuro[1] / 300*60;
+					int distX = posMuro[0] % 300;
+					int distY = posMuro[1] % 300;
+				}
+				break;
+			//Sensore SX
+			case 2:
+				if (distanza[i] < 25){
+					posMuro[0] = posizione[0] + (distanza[i] * -direzione[1]);	
+					posMuro[1] = posizione[1] + (distanza[i] * direzione[0]);
+					cella = (int)posMuro[0] / 300 + (int)posMuro[1] / 300*60;
+					int distX = posMuro[0] % 300;
+					int distY = posMuro[1] % 300;
+				}
+				break;
+			//Sensore DX
+			case 3:
+				if (distanza[i] < 25){
+					posMuro[0] = posizione[0] + (distanza[i] * direzione[1]);	
+					posMuro[1] = posizione[1] + (distanza[i] * direzione[0]);
+					cella = (int)posMuro[0] / 300 + (int)posMuro[1] / 300*60;
+					int distX = posMuro[0] % 300;
+					int distY = posMuro[1] % 300;
+				}
+				break;
+			//Sensore DX
+			case 4:
+				if (distanza[i] < 25){
+					posMuro[0] = posizione[0] + (distanza[i] * direzione[1]);	
+					posMuro[1] = posizione[1] + (distanza[i] * direzione[0]);
+					cella = (int)posMuro[0] / 300 + (int)posMuro[1] / 300*60;
+					int distX = posMuro[0] % 300;
+					int distY = posMuro[1] % 300;
+				}
+				break;
+			//giroscopio
+			case 5:
+				if (angolo != -1){
+					//TODO
+				}
+				break;
+			//velocità
+			case 6:
+				if (velocita != -1){
+					posizione[0] += velocita*0.1*direzione[0]; //Considero che onTimer venga chiamato 10 volte al secondo;
+					posizione[1] += velocita*0.1*direzione[1];
+				}
+				break;
+			//temperatura
+			case 7:
+				if(temperatura != -1){
+					if (temperatura > 30){ //Temperatura minima messa a caso.... Da decidere
+						cella = (int)posMuro[0] / 300 + (int)posMuro[1] / 300*60; //Considero che il sensore è sempre rivolto in avanti
+						campo[cella].muro[0] = 1;
+					}
+				}
+				break;
+			//colore
+			case 8:
+				if (colore != -1){
+					if (colore < 50){ //Anche qui valore messo a caso....
+						cella = (int)posMuro[0] / 300 + (int)posMuro[1] / 300*60;
+						campo[cella].piastrellaInterdetta = true;
+					}
+				}
+				break;
+			default:
+				break;
+		}
+	}
 }
 

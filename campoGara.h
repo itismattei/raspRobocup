@@ -10,6 +10,9 @@
 
 #include "cellaBase.h"
 #include <vector>
+#include "SerialComm.h"
+#include "TRcmd.h"
+
 using namespace std;
 
 class campoGara {
@@ -21,6 +24,8 @@ public:
 	void onTimer();
 	///proprietà
 	vector<cellaBase> campo;
+	SerialComm sc;
+	TRcmd CMD;
 };
 
 #endif /* CAMPOGARA_H_ */
