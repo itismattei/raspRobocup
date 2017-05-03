@@ -53,9 +53,9 @@ int main(){
 	//cella.e[1] = 1;
 	//terreno.campo.push_back(cella);
 	/// stampala dimensione del vettore
-	cout << "dim " << terreno.campo.size()  << endl;
-	cout << "coord. sec elemento " << terreno.campo[1].e[0] << " : " << terreno.campo[1].e[1] << endl;
-	cout << "coord. primo elemento " << terreno.campo[0].e[0] << " : " << terreno.campo[0].e[1] << endl;
+	//cout << "dim " << terreno.campo.size()  << endl;
+	//cout << "coord. sec elemento " << terreno.campo[1].e[0] << " : " << terreno.campo[1].e[1] << endl;
+	//cout << "coord. primo elemento " << terreno.campo[0].e[0] << " : " << terreno.campo[0].e[1] << endl;
 
 	/// iteratore
 	//vector<int> pippo;
@@ -67,47 +67,48 @@ int main(){
 
 	while(1){
 	  ///inivia un comando ogni 2 secondi
-		outF.open("dati.txt", ios::app);
+		//outF.open("dati.txt", ios::app);
 		if (millis () > nextTime){
+			terreno.onTimer();
 			//cout << "Out: " << "F" << endl;
-		  num_cicli++;
+		  /*num_cicli++;
 		  //printf ("\nOut: %3d: ", count) ;
 		  fflush (stdout) ;
 		  switch(STATO){
 		  case 0:
 		 	  CMD.sendCmd('D', 1);
-		 	  STATO = 1;
+		 	  STATO = 0;
 			  cout << "Out: " << "D1 " << num_cicli <<endl;
 			  outF << "Out: " << "D1 " << num_cicli <<endl;
 		  break;
 
 		  case 1:
-		 	  CMD.sendCmd('D', 5);
+		 	  CMD.sendCmd('D', 2);
 		 	  STATO = 2;
-			  cout << "Out: " << "D5 " << num_cicli <<endl;
-			  outF << "Out: " << "D5 " << num_cicli <<endl;
+			  cout << "Out: " << "D2 " << num_cicli <<endl;
+			  outF << "Out: " << "D2 " << num_cicli <<endl;
 
 		  break;
 
 		  case 2:
-		 	  CMD.sendCmd('I');
+		 	  CMD.sendCmd('D', 5);
 		 	  STATO = 3;
-			  cout << "Out: " << "I" << num_cicli << endl;
-			  outF << "Out: " << "I" << num_cicli <<endl;
+			  cout << "Out: " << "D5 " << num_cicli << endl;
+			  outF << "Out: " << "D5 " << num_cicli <<endl;
 		  break;
 
 		  case 3:
-		 	  CMD.sendCmd('D', 2);
+		 	  CMD.sendCmd('D', 3);
 		 	  STATO = 4;
-			  cout << "Out: " << "D2 " << num_cicli << endl;
-			  outF << "Out: " << "D2 " << num_cicli <<endl;
+			  cout << "Out: " << "D3 " << num_cicli << endl;
+			  outF << "Out: " << "D3 " << num_cicli <<endl;
 		  break;
 
 		  case 4:
-		 	  CMD.sendCmd('D', 3);
-		 	  STATO = 5;
-			  cout << "Out: " << "D1 " << num_cicli << endl;
-			  outF << "Out: " << "D1 " << num_cicli <<endl;
+		 	  CMD.sendCmd('D', 4);
+		 	  STATO = 0;
+			  cout << "Out: " << "D4 " << num_cicli << endl;
+			  outF << "Out: " << "D4 " << num_cicli <<endl;
 		  break;
 
 		  case 5:
@@ -130,8 +131,8 @@ int main(){
 
 //		  serialPutchar (fd, count) ;
 //		  serialPutchar (fd, '\n');
-//		  serialPutchar (fd, '\r');
-		  nextTime += 5000 ;
+//		  serialPutchar (fd, '\r');*/
+		  nextTime += 100;
 		}
 
 //		delay (3) ;
@@ -147,7 +148,7 @@ int main(){
 //				outF << "valore " << (int) buff[i] << endl;
 //			}
 //		}
-		if (CMD.receiveCmd()){
+		/*if (CMD.receiveCmd()){
 			/// il comando ricevuto e' valido e stampo i bytes
 
 			cout << "ricezione ok" << endl;
@@ -177,7 +178,7 @@ int main(){
 				outF << endl;
 			}
 
-		}
+		}*/
 //			printf("%c", serialGetchar(fd));
 //			fflush (stdout) ;
 //			//printf("\n");
@@ -187,7 +188,7 @@ int main(){
 //		  printf("\n");
 //		}
 //
-	  outF.close();
+//	  outF.close();
 		}
 
 	//funzione();

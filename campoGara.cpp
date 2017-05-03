@@ -21,6 +21,7 @@ campoGara::campoGara() {
 	rotazione = false;
 	dirGiroscopio[0] = 0;
 	dirGiroscopio[1] = 0;
+	count = 0;
 	CMD.connect(&sc);
 }
 
@@ -98,30 +99,30 @@ void campoGara::onTimer(){
 							int distX = posMuro[0] % 300;
 							if (direzione[1] = 1){
 								if (distX > 200){
-									campo[cella].muro[0] = 1;
+									inserisciMuro(cella, 0);
 								} else if(distX < 100){
-									campo[cella].muro[2] = 1;
+									inserisciMuro(cella, 2);
 								}
 							} else{
 								if (distX > 200){
-									campo[cella].muro[2] = 1;
+									inserisciMuro(cella, 2);
 								} else if(distX < 100){
-									campo[cella].muro[0] = 1;
+									inserisciMuro(cella, 0);
 								}
 							}
 						} else if(direzione[0] = 1){
 							int distY = posMuro[1] % 300;
 							if (distY > 200){
-								campo[cella].muro[1] = 1;
-							} else if(distX < 100){
-								campo[cella].muro[3] = 1;
+								inserisciMuro(cella, 1);
+							} else if(distY < 100){
+								inserisciMuro(cella, 3);
 							}
 						} else{
 							int distY = posMuro[1] % 300;
 							if (distY > 200){
-								campo[cella].muro[3] = 1;
-							} else if(distX < 100){
-								campo[cella].muro[1] = 1;
+								inserisciMuro(cella, 3);
+							} else if(distY < 100){
+								inserisciMuro(cella, 1);
 							}
 						}
 					}
@@ -134,14 +135,14 @@ void campoGara::onTimer(){
 						cella = (int)posizione[0] / 300 + (int)posizione[1] / 300*60;
 						if (direzione[0] = 0){
 							if (direzione[1] = 1){
-								campo[cella].muro[3] = 1;
+								inserisciMuro(cella, 3);
 							} else{
-								campo[cella].muro[1] = 1;
+								inserisciMuro(cella, 1);
 							}
 						} else if(direzione[0] = 1){
-							campo[cella].muro[0] = 1;
+							inserisciMuro(cella, 0);
 						} else{
-							campo[cella].muro[2] = 1;
+							inserisciMuro(cella, 2);
 						}
 						//int distX = posMuro[0] % 300;
 						//int distY = posMuro[1] % 300;
@@ -155,14 +156,14 @@ void campoGara::onTimer(){
 						cella = (int)posizione[0] / 300 + (int)posizione[1] / 300*60;
 						if (direzione[0] = 0){
 							if (direzione[1] = 1){
-								campo[cella].muro[3] = 1;
+								inserisciMuro(cella, 3);
 							} else{
-								campo[cella].muro[1] = 1;
+								inserisciMuro(cella, 1);
 							}
 						} else if(direzione[0] = 1){
-							campo[cella].muro[0] = 1;
+							inserisciMuro(cella, 0);
 						} else{
-							campo[cella].muro[2] = 1;
+							inserisciMuro(cella, 2);
 						}
 						//int distX = posMuro[0] % 300;
 						//int distY = posMuro[1] % 300;
@@ -176,14 +177,14 @@ void campoGara::onTimer(){
 						cella = (int)posizione[0] / 300 + (int)posizione[1] / 300*60;
 						if (direzione[0] = 0){
 							if (direzione[1] = 1){
-								campo[cella].muro[1] = 1;
+								inserisciMuro(cella, 1);
 							} else{
-								campo[cella].muro[3] = 1;
+								inserisciMuro(cella, 3);
 							}
 						} else if(direzione[0] = 1){
-							campo[cella].muro[2] = 1;
+							inserisciMuro(cella, 2);
 						} else{
-							campo[cella].muro[0] = 1;
+							inserisciMuro(cella, 0);
 						}
 						
 						//int distX = posMuro[0] % 300;
@@ -198,14 +199,14 @@ void campoGara::onTimer(){
 						cella = (int)posizione[0] / 300 + (int)posizione[1] / 300*60;
 						if (direzione[0] = 0){
 							if (direzione[1] = 1){
-								campo[cella].muro[1] = 1;
+								inserisciMuro(cella, 1);
 							} else{
-								campo[cella].muro[3] = 1;
+								inserisciMuro(cella, 3);
 							}
 						} else if(direzione[0] = 1){
-							campo[cella].muro[2] = 1;
+							inserisciMuro(cella, 2);
 						} else{
-							campo[cella].muro[0] = 1;
+							inserisciMuro(cella, 0);
 						}
 						
 						//int distX = posMuro[0] % 300;
@@ -229,8 +230,8 @@ void campoGara::onTimer(){
 				case 7:
 					if(temperatura != -1){
 						if (temperatura > 30){ //Temperatura minima messa a caso.... Da decidere
-							cella = (int)posMuro[0] / 300 + (int)posMuro[1] / 300*60; //Considero che il sensore Ã¨ sempre rivolto in avanti
-							campo[cella].muro[0] = 1;
+							cella = (int)posizione[0] / 300 + (int)posizione[1] / 300*60; //Considero che il sensore Ã¨ sempre rivolto in avanti
+							campo[cella].calore[0] = 1;
 						}
 					}
 					break;
@@ -238,7 +239,7 @@ void campoGara::onTimer(){
 				case 8:
 					if (colore != -1){
 						if (colore < 50){ //Anche qui valore messo a caso....
-							cella = (int)posMuro[0] / 300 + (int)posMuro[1] / 300*60;
+							cella = (int)posizione[0] / 300 + (int)posizione[1] / 300*60;
 							campo[cella].piastrellaInterdetta = true;
 						}
 					}
@@ -247,7 +248,7 @@ void campoGara::onTimer(){
 					break;
 			}
 		}
-		cella = (int)posMuro[0] / 300 + (int)posMuro[1] / 300*60;
+		cella = (int)posizione[0] / 300 + (int)posizione[1] / 300*60;
 		if (direzione[0] = 0){
 			if (direzione[1] = 1){
 				if (campo[cella].muro[0] = 0){
@@ -317,34 +318,42 @@ void campoGara::onTimer(){
 		}
 	//Robot in rotazione
 	} else{
-		CMD.sendCmd('D', 6);
-		int dir = 0;
-		if(CMD.receiveCmd()){
-			dir = (CMD.rxBuff[1] & 0xFF) << 8;
-			dir += (CMD.rxBuff[2] & 0xFF);
-			if (dirGiroscopio[0]+dirGiroscopio[1]  ){ //Condizione di avvenuta rotazione
-				rotazione = false;
-				//Rotazione di 180°
-				if (dirGiroscopio[1] = 180){
-					direzione[0] = -direzione[0];
-					direzione[1] = -direzione[1];
-				//Rotazione a destra
-				} else if(dirGiroscopio[1] = 90){
-					if (direzione[0] = 0){
-						direzione[0] = direzione[1];
-						direzione[1] = 0;
+		count++;
+		if (count > 100){
+			CMD.sendCmd('B');
+			rotazione = false;
+			count = 0;
+		} else{
+			CMD.sendCmd('D', 6);
+			int dir = 0;
+			if(CMD.receiveCmd()){
+				dir = (CMD.rxBuff[1] & 0xFF) << 8;
+				dir += (CMD.rxBuff[2] & 0xFF);
+				if ((dirGiroscopio[0]+ abs(dirGiroscopio[1]) < (dir + 5)) && (dirGiroscopio[0]+ abs(dirGiroscopio[1]) > (dir - 5))){ //Condizione di avvenuta rotazione
+					count = 0;
+					rotazione = false;
+					//Rotazione di 180°
+					if (dirGiroscopio[1] = 180){
+						direzione[0] = -direzione[0];
+						direzione[1] = -direzione[1];
+					//Rotazione a destra
+					} else if(dirGiroscopio[1] = 90){
+						if (direzione[0] = 0){
+							direzione[0] = direzione[1];
+							direzione[1] = 0;
+						} else{
+							direzione[1] = -direzione[0];
+							direzione[0] = 0;
+						}
+					//Rotazione a sinistra
 					} else{
-						direzione[1] = -direzione[0];
-						direzione[0] = 0;
-					}
-				//Rotazione a sinistra
-				} else{
-					if (direzione[0] = 0){
-						direzione[0] = -direzione[1];
-						direzione[1] = 0;
-					} else{
-						direzione[1] = direzione[0];
-						direzione[0] = 0;
+						if (direzione[0] = 0){
+							direzione[0] = -direzione[1];
+							direzione[1] = 0;
+						} else{
+							direzione[1] = direzione[0];
+							direzione[0] = 0;
+						}
 					}
 				}
 			}
@@ -372,7 +381,7 @@ int campoGara::ricercaBinariaNonRicorsiva(int lista[8][2], int n, int x){
 }
 
 int campoGara::interpolazione(int valore){
-	int tabella[9][2] = {60, 1550}, {50, 1800}, {45, 2200}, {40, 2400}, {30, 2700}, {25, 2850}, {20, 3240}, {15, 3690}};
+	int tabella[9][2] = {{60, 1550}, {50, 1800}, {45, 2200}, {40, 2400}, {30, 2700}, {25, 2850}, {20, 3240}, {15, 3690}};
 	int r = ricercaBinariaNonRicorsiva(tabella, 8, valore);
 	int Ya = tabella[r][0];
 	int Xa = tabella[r][1];
@@ -380,5 +389,26 @@ int campoGara::interpolazione(int valore){
 	int Xb = tabella[r+1][1];
 	float y = (valore-Xa)*((float)(Yb-Ya)/(Xb-Xa))+Ya;
 	return (int)y;
+}
+
+void campoGara::inserisciMuro(int cella, int muro){
+	campo[cella].muro[muro] = 1;
+	if (muro = 0){
+		if (cella > 59){
+			campo[cella-60].muro[2] = 1;
+		}
+	} else if(muro = 1){
+		if (cella % 59 != 0){
+			campo[cella++].muro[3] = 1;
+		}
+	} else if(muro = 2){
+		if (cella < 3539){
+			campo[cella+60].muro[0] = 1;
+		}
+	} else{
+		if (cella % 60 != 0){
+			campo[cella--].muro[1] = 1;
+		}
+	}
 }
 

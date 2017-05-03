@@ -12,6 +12,7 @@
 #include <vector>
 #include "SerialComm.h"
 #include "TRcmd.h"
+#include <stdlib.h>
 
 using namespace std;
 
@@ -21,11 +22,13 @@ public:
 	int direzione[2];
 	int dirGiroscopio[2];
 	bool rotazione;
+	int count;
 	campoGara();
 	virtual ~campoGara();
 	void onTimer();
 	int ricercaBinariaNonRicorsiva(int lista[8][2], int n, int x);
 	int interpolazione(int valore);
+	void inserisciMuro(int cella, int muro);
 	///proprietà
 	vector<cellaBase> campo;
 	SerialComm sc;
