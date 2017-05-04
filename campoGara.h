@@ -13,6 +13,7 @@
 #include "SerialComm.h"
 #include "TRcmd.h"
 #include <stdlib.h>
+#include <iostream>
 
 using namespace std;
 
@@ -23,6 +24,8 @@ public:
 	int dirGiroscopio[2];
 	bool rotazione;
 	int count;
+	int impulsi;
+	bool start;
 	campoGara();
 	virtual ~campoGara();
 	void onTimer();

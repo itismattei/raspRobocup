@@ -7,13 +7,19 @@
 
 #include "campoGara.h"
 
+extern "C" {	
+	int funzione();
+	int millis();
+	int delay(int);
+}
+
 campoGara::campoGara() {
 	// TODO Auto-generated constructor stub
 	for (int i=0;i<60;i++){
 		for(int j=0;j<60;j++){
 			campo.push_back(cellaBase(i, j));
 		}
-	} 
+	}
 	posizione[0] = 9150;  //X
 	posizione[1] = -9150; //Y
 	direzione[0] = 0;
@@ -22,6 +28,8 @@ campoGara::campoGara() {
 	dirGiroscopio[0] = 0;
 	dirGiroscopio[1] = 0;
 	count = 0;
+	impulsi = 0;
+	start = false;
 	CMD.connect(&sc);
 }
 
@@ -31,233 +39,284 @@ campoGara::~campoGara() {
 }
 
 void campoGara::onTimer(){
-	//Fase di analisi
-
-	//Lettura sensori
-	//Lettura dei 5 sensori di distanza
-	if (!rotazione){
-		int distanza[5];
-		int angolo, colore, temperatura, velocita = 0;
-		for (int i=0;i<5;i++){
-			CMD.sendCmd('D', i+1);
-	
-			if (CMD.receiveCmd()){
-				if (CMD.rxBuff[0] < 6){
-					distanza[i] = (CMD.rxBuff[1] & 0xFF) << 8;
-					distanza[i] += (CMD.rxBuff[2] & 0xFF);
+	volatile int y = 0;
+	if (!start){
+		CMD.sendCmd('S');
+		if (CMD.receiveCmd()){
+			start = true;
+			cout << "Connessione avvenuta" << endl;
+		}
+	}else{
+		if (!rotazione){
+			int distanza[5] = {-1};
+			int angolo, colore, temperatura, velocita = 0;
+			for (int i = 1;i < 6;i++){
+				y = 0;
+				CMD.sendCmd('D', i);
+				cout << "trasmesso richiesta lettura D"<< i << endl;
+//				while(y<100000){
+//					y++;
+//				}
+				
+				while (CMD.receiveCmd() == 0 && y < 100000)
+					y += 1;
+				
+				if (y < 100000){
+					if (CMD.rxBuff[0] < 6){
+						distanza[i-1] = (CMD.rxBuff[1] & 0xFF) << 8;
+						distanza[i-1] += (CMD.rxBuff[2] & 0xFF);
+						cout << "Sensore D" << i << distanza[i-1] << endl;
+					}
+				} else{
+					distanza[i-1] = -1;
+					cout << "timeout" << endl;
 				}
-			} else{
-				distanza[i] = -1;
 			}
-		}
-		//Lettura giroscopio
-		CMD.sendCmd('D', 6);
-		if(CMD.receiveCmd()){
-			angolo = (CMD.rxBuff[1] & 0xFF) << 8;
-			angolo += (CMD.rxBuff[2] & 0xFF);
-		} else{
-			angolo = -1;
-		}
-		//Lettura colore mattonella
-		CMD.sendCmd('D', 7);
-		if(CMD.receiveCmd()){
-			colore = (CMD.rxBuff[1] & 0xFF) << 8;
-			colore += (CMD.rxBuff[2] & 0xFF);
-		} else{
-			colore = -1;
-		}
-		//Lettura temperatura
-		CMD.sendCmd('D', 8);
-		if(CMD.receiveCmd()){
-			temperatura = (CMD.rxBuff[1] & 0xFF) << 8;
-			temperatura += (CMD.rxBuff[2] & 0xFF);
-		} else{
-			temperatura = -1;
-		}
-		//Lettura velocità
-		CMD.sendCmd('D', 9);
-		if(CMD.receiveCmd()){
-			velocita = (CMD.rxBuff[1] & 0xFF) << 8;
-			velocita += (CMD.rxBuff[2] & 0xFF);
-		} else{
-			velocita = -1;
-		}
+			//Lettura giroscopio
+			CMD.sendCmd('D', 6);
+			if(CMD.receiveCmd()){
+				angolo = (CMD.rxBuff[1] & 0xFF) << 8;
+				angolo += (CMD.rxBuff[2] & 0xFF);
+			} else{
+				angolo = -1;
+			}
+			//Lettura colore mattonella
+			CMD.sendCmd('D', 7);
+			if(CMD.receiveCmd()){
+				colore = (CMD.rxBuff[1] & 0xFF) << 8;
+				colore += (CMD.rxBuff[2] & 0xFF);
+			} else{
+				colore = -1;
+			}
+			//Lettura temperatura
+			CMD.sendCmd('D', 8);
+			if(CMD.receiveCmd()){
+				temperatura = (CMD.rxBuff[1] & 0xFF) << 8;
+				temperatura += (CMD.rxBuff[2] & 0xFF);
+			} else{
+				temperatura = -1;
+			}
+			//Lettura velocitÃ 
+			CMD.sendCmd('D', 10);
+			if(CMD.receiveCmd()){
+				velocita = (CMD.rxBuff[1] & 0xFF) << 8;
+				velocita += (CMD.rxBuff[2] & 0xFF);
+			} else{
+				velocita = -1;
+			}
 	
 	
-		//Analizzo i dati dei sensori
-		int posMuro[2];
-		int cella = 0;
-		for (int i=0;i<9;i++){
-			switch (i){
-				//Sensore frontale
-				case 0:
-					if (distanza[i] < 4000 && distanza[i] > 1500 && distanza[i] != -1){
-						posMuro[0] = posizione[0] + (distanza[i] * direzione[0])*100;
-						posMuro[1] = posizione[1] + (distanza[i] * direzione[1])*100;
-						cella = (int)posMuro[0] / 300 + (int)posMuro[1] / 300*60;
-						if (direzione[0] = 0){
-							int distX = posMuro[0] % 300;
-							if (direzione[1] = 1){
-								if (distX > 200){
-									inserisciMuro(cella, 0);
-								} else if(distX < 100){
-									inserisciMuro(cella, 2);
+			//Analizzo i dati dei sensori
+			int posMuro[2];
+			int cella = 0;
+			for (int i=0;i<9;i++){
+				switch (i){
+					//Sensore frontale
+					case 0:
+						if (distanza[i] < 4000 && distanza[i] > 1500 && distanza[i] != -1){
+							posMuro[0] = posizione[0] + (distanza[i] * direzione[0])*100;
+							posMuro[1] = posizione[1] + (distanza[i] * direzione[1])*100;
+							cella = (int)posMuro[0] / 300 + (int)posMuro[1] / 300*60;
+							if (direzione[0] = 0){
+								int distX = posMuro[0] % 300;
+								if (direzione[1] = 1){
+									if (distX > 200){
+										inserisciMuro(cella, 0);
+									} else if(distX < 100){
+										inserisciMuro(cella, 2);
+									}
+								} else{
+									if (distX > 200){
+										inserisciMuro(cella, 2);
+									} else if(distX < 100){
+										inserisciMuro(cella, 0);
+									}
+								}
+							} else if(direzione[0] = 1){
+								int distY = posMuro[1] % 300;
+								if (distY > 200){
+									inserisciMuro(cella, 1);
+								} else if(distY < 100){
+									inserisciMuro(cella, 3);
 								}
 							} else{
-								if (distX > 200){
-									inserisciMuro(cella, 2);
-								} else if(distX < 100){
-									inserisciMuro(cella, 0);
+								int distY = posMuro[1] % 300;
+								if (distY > 200){
+									inserisciMuro(cella, 3);
+								} else if(distY < 100){
+									inserisciMuro(cella, 1);
 								}
 							}
-						} else if(direzione[0] = 1){
-							int distY = posMuro[1] % 300;
-							if (distY > 200){
-								inserisciMuro(cella, 1);
-							} else if(distY < 100){
-								inserisciMuro(cella, 3);
-							}
-						} else{
-							int distY = posMuro[1] % 300;
-							if (distY > 200){
-								inserisciMuro(cella, 3);
-							} else if(distY < 100){
-								inserisciMuro(cella, 1);
-							}
 						}
-					}
-					break;
-				//Sensore SX
-				case 1:
-					if (distanza[i] < 1500 && distanza[i] != -1){
-						//posMuro[0] = posizione[0] + (distanza[i] * -direzione[1]);	
-						//posMuro[1] = posizione[1] + (distanza[i] * direzione[0]);
-						cella = (int)posizione[0] / 300 + (int)posizione[1] / 300*60;
-						if (direzione[0] = 0){
-							if (direzione[1] = 1){
-								inserisciMuro(cella, 3);
-							} else{
-								inserisciMuro(cella, 1);
-							}
-						} else if(direzione[0] = 1){
-							inserisciMuro(cella, 0);
-						} else{
-							inserisciMuro(cella, 2);
-						}
-						//int distX = posMuro[0] % 300;
-						//int distY = posMuro[1] % 300;
-					}
-					break;
-				//Sensore SX
-				case 2:
-					if (distanza[i] < 1500 && distanza[i] != -1){
-						//posMuro[0] = posizione[0] + (distanza[i] * -direzione[1]);	
-						//posMuro[1] = posizione[1] + (distanza[i] * direzione[0]);
-						cella = (int)posizione[0] / 300 + (int)posizione[1] / 300*60;
-						if (direzione[0] = 0){
-							if (direzione[1] = 1){
-								inserisciMuro(cella, 3);
-							} else{
-								inserisciMuro(cella, 1);
-							}
-						} else if(direzione[0] = 1){
-							inserisciMuro(cella, 0);
-						} else{
-							inserisciMuro(cella, 2);
-						}
-						//int distX = posMuro[0] % 300;
-						//int distY = posMuro[1] % 300;
-					}
-					break;
-				//Sensore DX
-				case 3:
-					if (distanza[i] < 1500 && distanza[i] != -1){
-						//posMuro[0] = posizione[0] + (distanza[i] * direzione[1]);	
-						//posMuro[1] = posizione[1] + (distanza[i] * direzione[0]);
-						cella = (int)posizione[0] / 300 + (int)posizione[1] / 300*60;
-						if (direzione[0] = 0){
-							if (direzione[1] = 1){
-								inserisciMuro(cella, 1);
-							} else{
-								inserisciMuro(cella, 3);
-							}
-						} else if(direzione[0] = 1){
-							inserisciMuro(cella, 2);
-						} else{
-							inserisciMuro(cella, 0);
-						}
-						
-						//int distX = posMuro[0] % 300;
-						//int distY = posMuro[1] % 300;
-					}
-					break;
-				//Sensore DX
-				case 4:
-					if (distanza[i] < 1500 && distanza[i] != -1){
-						//posMuro[0] = posizione[0] + (distanza[i] * direzione[1]);	
-						//posMuro[1] = posizione[1] + (distanza[i] * direzione[0]);
-						cella = (int)posizione[0] / 300 + (int)posizione[1] / 300*60;
-						if (direzione[0] = 0){
-							if (direzione[1] = 1){
-								inserisciMuro(cella, 1);
-							} else{
-								inserisciMuro(cella, 3);
-							}
-						} else if(direzione[0] = 1){
-							inserisciMuro(cella, 2);
-						} else{
-							inserisciMuro(cella, 0);
-						}
-						
-						//int distX = posMuro[0] % 300;
-						//int distY = posMuro[1] % 300;
-					}
-					break;
-				//giroscopio
-				case 5:
-					if (angolo != -1){
-						dirGiroscopio[0] = angolo;
-					}
-					break;
-				//velocità
-				case 6:
-					if (velocita != -1){
-						posizione[0] += velocita*0.1*direzione[0]; //Considero che onTimer venga chiamato 10 volte al secondo;
-						posizione[1] += velocita*0.1*direzione[1];
-					}
-					break;
-				//temperatura
-				case 7:
-					if(temperatura != -1){
-						if (temperatura > 30){ //Temperatura minima messa a caso.... Da decidere
-							cella = (int)posizione[0] / 300 + (int)posizione[1] / 300*60; //Considero che il sensore è sempre rivolto in avanti
-							campo[cella].calore[0] = 1;
-						}
-					}
-					break;
-				//colore
-				case 8:
-					if (colore != -1){
-						if (colore < 50){ //Anche qui valore messo a caso....
+						break;
+					//Sensore SX
+					case 1:
+						if (distanza[i] < 1500 && distanza[i] != -1){
+							//posMuro[0] = posizione[0] + (distanza[i] * -direzione[1]);	
+							//posMuro[1] = posizione[1] + (distanza[i] * direzione[0]);
 							cella = (int)posizione[0] / 300 + (int)posizione[1] / 300*60;
-							campo[cella].piastrellaInterdetta = true;
+							if (direzione[0] = 0){
+								if (direzione[1] = 1){
+									inserisciMuro(cella, 3);
+								} else{
+									inserisciMuro(cella, 1);
+								}
+							} else if(direzione[0] = 1){
+								inserisciMuro(cella, 0);
+							} else{
+								inserisciMuro(cella, 2);
+							}
+							//int distX = posMuro[0] % 300;
+							//int distY = posMuro[1] % 300;
 						}
+						break;
+					//Sensore SX
+					case 2:
+						if (distanza[i] < 1500 && distanza[i] != -1){
+							//posMuro[0] = posizione[0] + (distanza[i] * -direzione[1]);	
+							//posMuro[1] = posizione[1] + (distanza[i] * direzione[0]);
+							cella = (int)posizione[0] / 300 + (int)posizione[1] / 300*60;
+							if (direzione[0] = 0){
+								if (direzione[1] = 1){
+									inserisciMuro(cella, 3);
+								} else{
+									inserisciMuro(cella, 1);
+								}
+							} else if(direzione[0] = 1){
+								inserisciMuro(cella, 0);
+							} else{
+								inserisciMuro(cella, 2);
+							}
+							//int distX = posMuro[0] % 300;
+							//int distY = posMuro[1] % 300;
+						}
+						break;
+					//Sensore DX
+					case 3:
+						if (distanza[i] < 1500 && distanza[i] != -1){
+							//posMuro[0] = posizione[0] + (distanza[i] * direzione[1]);	
+							//posMuro[1] = posizione[1] + (distanza[i] * direzione[0]);
+							cella = (int)posizione[0] / 300 + (int)posizione[1] / 300*60;
+							if (direzione[0] = 0){
+								if (direzione[1] = 1){
+									inserisciMuro(cella, 1);
+								} else{
+									inserisciMuro(cella, 3);
+								}
+							} else if(direzione[0] = 1){
+								inserisciMuro(cella, 2);
+							} else{
+								inserisciMuro(cella, 0);
+							}
+							
+							//int distX = posMuro[0] % 300;
+							//int distY = posMuro[1] % 300;
+						}
+						break;
+					//Sensore DX
+					case 4:
+						if (distanza[i] < 1500 && distanza[i] != -1){
+							//posMuro[0] = posizione[0] + (distanza[i] * direzione[1]);	
+							//posMuro[1] = posizione[1] + (distanza[i] * direzione[0]);
+							cella = (int)posizione[0] / 300 + (int)posizione[1] / 300*60;
+							if (direzione[0] = 0){
+								if (direzione[1] = 1){
+									inserisciMuro(cella, 1);
+								} else{
+									inserisciMuro(cella, 3);
+								}
+							} else if(direzione[0] = 1){
+								inserisciMuro(cella, 2);
+							} else{
+								inserisciMuro(cella, 0);
+							}
+							
+							//int distX = posMuro[0] % 300;
+							//int distY = posMuro[1] % 300;
+						}
+						break;
+					//giroscopio
+					case 5:
+						if (angolo != -1){
+							dirGiroscopio[0] = angolo;
+						}
+						break;
+					//velocitÃ 
+					case 6:
+						if (velocita != -1){
+							int imp = velocita - impulsi;
+							int vel = imp/40*10;
+							impulsi = velocita;
+							posizione[0] += vel*0.2*direzione[0]; //Considero che onTimer venga chiamato 10 volte al secondo;
+							posizione[1] += vel*0.2*direzione[1];
+						}
+						break;
+					//temperatura
+					case 7:
+						if(temperatura != -1){
+							if (temperatura > 30){ //Temperatura minima messa a caso.... Da decidere
+								cella = (int)posizione[0] / 300 + (int)posizione[1] / 300*60; //Considero che il sensore Ã¨ sempre rivolto in avanti
+								campo[cella].calore[3] = 1;
+								CMD.sendCmd('P');
+							}
+						}
+						break;
+					//colore
+					case 8:
+						if (colore != -1){
+							if (colore < 50){ //Anche qui valore messo a caso....
+								cella = (int)posizione[0] / 300 + (int)posizione[1] / 300*60;
+								campo[cella].piastrellaInterdetta = true;
+							}
+						}
+						break;
+					default:
+						break;
+				}
+			}
+			cella = (int)posizione[0] / 300 + (int)posizione[1] / 300*60;
+			if (direzione[0] == 0){
+				if (direzione[1] == 1){
+					if (campo[cella].muro[0] == 0){
+						CMD.sendCmd('F');
+					} else if(campo[cella].muro[1] == 0){
+						CMD.sendCmd('R');
+						rotazione = true;
+						dirGiroscopio[1] = 90;
+					} else if(campo[cella].muro[3] == 0){
+						CMD.sendCmd('L');
+						rotazione = true;
+						dirGiroscopio[1] = -90;
+					} else{
+						CMD.sendCmd('I');
+						rotazione = true;
+						dirGiroscopio[1] = 180;
 					}
-					break;
-				default:
-					break;
-			}
-		}
-		cella = (int)posizione[0] / 300 + (int)posizione[1] / 300*60;
-		if (direzione[0] = 0){
-			if (direzione[1] = 1){
-				if (campo[cella].muro[0] = 0){
+				} else{
+					if (campo[cella].muro[2] == 0){
+						CMD.sendCmd('F');
+					} else if(campo[cella].muro[3] == 0){
+						CMD.sendCmd('R');
+						rotazione = true;
+						dirGiroscopio[1] = 90;
+					} else if(campo[cella].muro[1] == 0){
+						CMD.sendCmd('L');
+						rotazione = true;
+						dirGiroscopio[1] = -90;
+					} else{
+						CMD.sendCmd('I');
+						rotazione = true;
+						dirGiroscopio[1] = 180;
+					}
+				}
+			} else if(direzione[0] == 1){
+				if (campo[cella].muro[1] == 0){
 					CMD.sendCmd('F');
-				} else if(campo[cella].muro[1] = 0){
+				} else if(campo[cella].muro[2] == 0){
 					CMD.sendCmd('R');
 					rotazione = true;
 					dirGiroscopio[1] = 90;
-				} else if(campo[cella].muro[3] = 0){
+				} else if(campo[cella].muro[0] == 0){
 					CMD.sendCmd('L');
 					rotazione = true;
 					dirGiroscopio[1] = -90;
@@ -267,13 +326,13 @@ void campoGara::onTimer(){
 					dirGiroscopio[1] = 180;
 				}
 			} else{
-				if (campo[cella].muro[2] = 0){
+				if (campo[cella].muro[3] == 0){
 					CMD.sendCmd('F');
-				} else if(campo[cella].muro[3] = 0){
+				} else if(campo[cella].muro[0] == 0){
 					CMD.sendCmd('R');
 					rotazione = true;
 					dirGiroscopio[1] = 90;
-				} else if(campo[cella].muro[1] = 0){
+				} else if(campo[cella].muro[2] == 0){
 					CMD.sendCmd('L');
 					rotazione = true;
 					dirGiroscopio[1] = -90;
@@ -282,39 +341,6 @@ void campoGara::onTimer(){
 					rotazione = true;
 					dirGiroscopio[1] = 180;
 				}
-			}
-		} else if(direzione[0] = 1){
-			if (campo[cella].muro[1] = 0){
-				CMD.sendCmd('F');
-			} else if(campo[cella].muro[2] = 0){
-				CMD.sendCmd('R');
-				rotazione = true;
-				dirGiroscopio[1] = 90;
-			} else if(campo[cella].muro[0] = 0){
-				CMD.sendCmd('L');
-				rotazione = true;
-				dirGiroscopio[1] = -90;
-			} else{
-				CMD.sendCmd('I');
-				rotazione = true;
-				dirGiroscopio[1] = 180;
-			}
-		} else{
-			if (campo[cella].muro[3] = 0){
-				CMD.sendCmd('F');
-			} else if(campo[cella].muro[0] = 0){
-				CMD.sendCmd('R');
-				rotazione = true;
-				dirGiroscopio[1] = 90;
-			} else if(campo[cella].muro[2] = 0){
-				CMD.sendCmd('L');
-				rotazione = true;
-				dirGiroscopio[1] = -90;
-			} else{
-				CMD.sendCmd('I');
-				rotazione = true;
-				dirGiroscopio[1] = 180;
-			}
 		}
 	//Robot in rotazione
 	} else{
@@ -332,12 +358,12 @@ void campoGara::onTimer(){
 				if ((dirGiroscopio[0]+ abs(dirGiroscopio[1]) < (dir + 5)) && (dirGiroscopio[0]+ abs(dirGiroscopio[1]) > (dir - 5))){ //Condizione di avvenuta rotazione
 					count = 0;
 					rotazione = false;
-					//Rotazione di 180�
-					if (dirGiroscopio[1] = 180){
+					//Rotazione di 180°
+					if (dirGiroscopio[1] == 180){
 						direzione[0] = -direzione[0];
 						direzione[1] = -direzione[1];
 					//Rotazione a destra
-					} else if(dirGiroscopio[1] = 90){
+					} else if(dirGiroscopio[1] == 90){
 						if (direzione[0] = 0){
 							direzione[0] = direzione[1];
 							direzione[1] = 0;
@@ -359,7 +385,7 @@ void campoGara::onTimer(){
 			}
 		}
 	}
-	
+	}
 }
 
 int campoGara::ricercaBinariaNonRicorsiva(int lista[8][2], int n, int x){
