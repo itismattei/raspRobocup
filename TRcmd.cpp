@@ -85,10 +85,11 @@ void TRcmd::sendCmd(char c){
 	}
 
 	if (scPtr != NULL && def_ == 0){
-//		cout << "scritto txbuff" << endl;
+		cout << "scritto txbuff" << endl;
 //		cout << txBuff[0] << endl;
 //		cout << txBuff[3] << endl;
 		scPtr->writeBuff(txBuff, 4);
+		cout << "terminata writeBuff \n";
 	}
 }
 

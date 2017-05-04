@@ -9,6 +9,7 @@
 #define TRCMD_H_
 
 #include "SerialComm.h"
+#include <stdlib.h>
 
 /*
  *
