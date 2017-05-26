@@ -34,6 +34,8 @@ int main(){
 	ofstream outF("dati.txt", ios::app);
 	cout << "Test Comunicazione!" << endl;
 	outF << "Registrazione comunicazioni" << endl;
+	//SerialComm sc;
+	//TRcmd CMD;
 	//CMD.connect(&sc);
 //	fd = sc.openSer();
 //	printf("Num descrittore %d\n", fd);
@@ -67,12 +69,13 @@ int main(){
 	  ///inivia un comando ogni 2 secondi
 		//outF.open("dati.txt", ios::app);
 		if (millis () > nextTime){
+			//CMD.sendCmd('F');
 			terreno.onTimer();
 			//terreno.onTimer();
 			//cout << "Out: " << "F" << endl;
 		//  num_cicli++;
 		  //printf ("\nOut: %3d: ", count) ;
-		  fflush (stdout) ;
+		  //fflush (stdout) ;
 		 /* switch(STATO){
 		  case 0:
 		 	  CMD.sendCmd('D', 1);

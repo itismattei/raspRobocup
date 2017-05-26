@@ -31,6 +31,11 @@ campoGara::campoGara() {
 	impulsi = 0;
 	start = false;
 	CMD.connect(&sc);
+	if (CMD.isOK == true){
+		cout << "connesso\n";
+	} else if(CMD.isOK == false){
+		cout << "Non connesso\n";
+	}
 }
 
 campoGara::~campoGara() {
@@ -41,31 +46,37 @@ campoGara::~campoGara() {
 void campoGara::onTimer(){
 	volatile int y = 0;
 	if (!start){
+		cout << "Inviato comando di avvio" << endl;
 		CMD.sendCmd('S');
 		if (CMD.receiveCmd()){
 			start = true;
 			cout << "Connessione avvenuta" << endl;
+			//CMD.sendCmd('F');
+			for(int x=0;x<10000;x++){
+
+			}
 		}
 	}else{
 		if (!rotazione){
 			int distanza[5] = {-1};
-			int angolo, colore, temperatura, velocita = 0;
-			for (int i = 1;i < 6;i++){
+			int angolo, colore, temperatura, velocita = -1;
+			
+			for (int i = 5;i > 0;i--){
 				y = 0;
 				CMD.sendCmd('D', i);
-				cout << "trasmesso richiesta lettura D"<< i << endl;
+				cout << "trasmesso richiesta lettura D" << i << endl;
 //				while(y<100000){
 //					y++;
 //				}
 				
-				while (CMD.receiveCmd() == 0 && y < 100000)
+				while (CMD.receiveCmd() == 0 && y < 1000000)
 					y += 1;
-				
+				//cout << "numero cicli while: " << y << endl;
 				if (y < 100000){
 					if (CMD.rxBuff[0] < 6){
 						distanza[i-1] = (CMD.rxBuff[1] & 0xFF) << 8;
 						distanza[i-1] += (CMD.rxBuff[2] & 0xFF);
-						cout << "Sensore D" << i << distanza[i-1] << endl;
+						cout << "Sensore D" << i << " " << distanza[i-1] << endl;
 					}
 				} else{
 					distanza[i-1] = -1;
@@ -74,37 +85,54 @@ void campoGara::onTimer(){
 			}
 			//Lettura giroscopio
 			CMD.sendCmd('D', 6);
-			if(CMD.receiveCmd()){
-				angolo = (CMD.rxBuff[1] & 0xFF) << 8;
-				angolo += (CMD.rxBuff[2] & 0xFF);
+			uint16_t ang; 
+			y = 0;
+			while (CMD.receiveCmd() == 0 && y < 100000)
+					y += 1;
+			if(y < 100000){
+				ang = (CMD.rxBuff[1] & 0xFF) << 8;
+				ang += (CMD.rxBuff[2] & 0xFF);
+				angolo = (int16_t)ang;
+				cout << "Sensore D6: " << angolo << endl;
 			} else{
 				angolo = -1;
 			}
 			//Lettura colore mattonella
-			CMD.sendCmd('D', 7);
-			if(CMD.receiveCmd()){
+			/*CMD.sendCmd('D', 7);
+			y = 0;
+			while (CMD.receiveCmd() == 0 && y < 1000)
+					y += 1;
+			if(y < 1000){
 				colore = (CMD.rxBuff[1] & 0xFF) << 8;
 				colore += (CMD.rxBuff[2] & 0xFF);
+				cout << "Sensore D7: " << colore << endl;
 			} else{
 				colore = -1;
 			}
 			//Lettura temperatura
 			CMD.sendCmd('D', 8);
-			if(CMD.receiveCmd()){
+			y = 0;
+			while (CMD.receiveCmd() == 0 && y < 1000)
+					y += 1;
+			if(y < 1000){
 				temperatura = (CMD.rxBuff[1] & 0xFF) << 8;
 				temperatura += (CMD.rxBuff[2] & 0xFF);
+				cout << "Sensore D8: " << temperatura << endl;
 			} else{
 				temperatura = -1;
-			}
+			}*/
 			//Lettura velocitÃ 
 			CMD.sendCmd('D', 10);
-			if(CMD.receiveCmd()){
+			y = 0;
+			while (CMD.receiveCmd() == 0 && y < 100000)
+					y += 1;
+			if(y < 100000){
 				velocita = (CMD.rxBuff[1] & 0xFF) << 8;
 				velocita += (CMD.rxBuff[2] & 0xFF);
+				cout << "Sensore D10: " << velocita << endl;
 			} else{
 				velocita = -1;
 			}
-	
 	
 			//Analizzo i dati dei sensori
 			int posMuro[2];
@@ -117,9 +145,9 @@ void campoGara::onTimer(){
 							posMuro[0] = posizione[0] + (distanza[i] * direzione[0])*100;
 							posMuro[1] = posizione[1] + (distanza[i] * direzione[1])*100;
 							cella = (int)posMuro[0] / 300 + (int)posMuro[1] / 300*60;
-							if (direzione[0] = 0){
+							if (direzione[0] == 0){
 								int distX = posMuro[0] % 300;
-								if (direzione[1] = 1){
+								if (direzione[1] == 1){
 									if (distX > 200){
 										inserisciMuro(cella, 0);
 									} else if(distX < 100){
@@ -132,7 +160,7 @@ void campoGara::onTimer(){
 										inserisciMuro(cella, 0);
 									}
 								}
-							} else if(direzione[0] = 1){
+							} else if(direzione[0] == 1){
 								int distY = posMuro[1] % 300;
 								if (distY > 200){
 									inserisciMuro(cella, 1);
@@ -155,13 +183,13 @@ void campoGara::onTimer(){
 							//posMuro[0] = posizione[0] + (distanza[i] * -direzione[1]);	
 							//posMuro[1] = posizione[1] + (distanza[i] * direzione[0]);
 							cella = (int)posizione[0] / 300 + (int)posizione[1] / 300*60;
-							if (direzione[0] = 0){
-								if (direzione[1] = 1){
+							if (direzione[0] == 0){
+								if (direzione[1] == 1){
 									inserisciMuro(cella, 3);
 								} else{
 									inserisciMuro(cella, 1);
 								}
-							} else if(direzione[0] = 1){
+							} else if(direzione[0] == 1){
 								inserisciMuro(cella, 0);
 							} else{
 								inserisciMuro(cella, 2);
@@ -176,13 +204,13 @@ void campoGara::onTimer(){
 							//posMuro[0] = posizione[0] + (distanza[i] * -direzione[1]);	
 							//posMuro[1] = posizione[1] + (distanza[i] * direzione[0]);
 							cella = (int)posizione[0] / 300 + (int)posizione[1] / 300*60;
-							if (direzione[0] = 0){
-								if (direzione[1] = 1){
+							if (direzione[0] == 0){
+								if (direzione[1] == 1){
 									inserisciMuro(cella, 3);
 								} else{
 									inserisciMuro(cella, 1);
 								}
-							} else if(direzione[0] = 1){
+							} else if(direzione[0] == 1){
 								inserisciMuro(cella, 0);
 							} else{
 								inserisciMuro(cella, 2);
@@ -197,13 +225,13 @@ void campoGara::onTimer(){
 							//posMuro[0] = posizione[0] + (distanza[i] * direzione[1]);	
 							//posMuro[1] = posizione[1] + (distanza[i] * direzione[0]);
 							cella = (int)posizione[0] / 300 + (int)posizione[1] / 300*60;
-							if (direzione[0] = 0){
-								if (direzione[1] = 1){
+							if (direzione[0] == 0){
+								if (direzione[1] == 1){
 									inserisciMuro(cella, 1);
 								} else{
 									inserisciMuro(cella, 3);
 								}
-							} else if(direzione[0] = 1){
+							} else if(direzione[0] == 1){
 								inserisciMuro(cella, 2);
 							} else{
 								inserisciMuro(cella, 0);
@@ -219,13 +247,13 @@ void campoGara::onTimer(){
 							//posMuro[0] = posizione[0] + (distanza[i] * direzione[1]);	
 							//posMuro[1] = posizione[1] + (distanza[i] * direzione[0]);
 							cella = (int)posizione[0] / 300 + (int)posizione[1] / 300*60;
-							if (direzione[0] = 0){
-								if (direzione[1] = 1){
+							if (direzione[0] == 0){
+								if (direzione[1] == 1){
 									inserisciMuro(cella, 1);
 								} else{
 									inserisciMuro(cella, 3);
 								}
-							} else if(direzione[0] = 1){
+							} else if(direzione[0] == 1){
 								inserisciMuro(cella, 2);
 							} else{
 								inserisciMuro(cella, 0);
@@ -275,7 +303,7 @@ void campoGara::onTimer(){
 				}
 			}
 			cella = (int)posizione[0] / 300 + (int)posizione[1] / 300*60;
-			if (direzione[0] == 0){
+			/*if (direzione[0] == 0){
 				if (direzione[1] == 1){
 					if (campo[cella].muro[0] == 0){
 						CMD.sendCmd('F');
@@ -341,8 +369,9 @@ void campoGara::onTimer(){
 					rotazione = true;
 					dirGiroscopio[1] = 180;
 				}
-		}
+		}*/
 	//Robot in rotazione
+		CMD.sendCmd('F');
 	} else{
 		count++;
 		if (count > 100){
